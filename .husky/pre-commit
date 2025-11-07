@@ -1,2 +1,2 @@
 # shellcheck disable=SC2148
-bunx lint-staged
+npx lint-staged

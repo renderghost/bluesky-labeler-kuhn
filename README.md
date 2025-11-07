@@ -1,32 +1,84 @@
-# Bluesky Labeler Starter Kit
+# Bluesky Labeler - Thomas Kuhn Foundation
 
-Use this repository to get started with your own Bluesky Labeler. Click the "Use this template" button above to create a new repository, and then follow the instructions below.
+A Bluesky labeler service that automatically classifies research papers shared on Bluesky using Kuhnian epistemic framework analysis powered by the Thomas Kuhn Foundation's KGX3 API.
 
-As an example, this repository includes a labeler for setting your favorite of the five elements (Earth, Fire, Air, Water, Love) to your profile. You can edit the labels, descriptions, and other parameters in the `src/constants.ts` file.
+## What Does This Labeler Do?
 
-**This project requires familiarity with TypeScript, the command line and Linux. I hope to improve the onboarding experience in the future.**
+This labeler monitors research papers shared on Bluesky and automatically applies classification labels based on the Thomas Kuhn Foundation's science intelligence framework. It categorizes papers into four epistemic categories:
 
-## Support My Work
+- **Normal Science** (60%) - Research confirming existing frameworks
+- **Model Drift** (25%) - Research introducing variations to established models
+- **Model Crisis** (13%) - Research creating stress on current paradigms
+- **Paradigm Shift** (2%) - Research fundamentally breaking established models
 
-If you find this project helpful, please consider supporting my work:
+The classification is based on three dimensions:
 
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logocolor=white)](https://ko-fi.com/aliceisjustplaying)
-[![GitHub Sponsors](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#white)](https://github.com/sponsors/aliceisjustplaying)
+- **(M)ethod** - Research approach
+- **(N)evidence** - Supporting data
+- **(P)osition** - Role in the field
 
-## Prerequisites
+## Why Is It Useful?
 
-- [Node.js](https://nodejs.org/) v22.11.0 (LTS) for the runtime
-- [Bun](https://bun.sh/) (latest) for package management
+This labeler helps Bluesky users:
 
-## Setup
+- **Identify emerging research trends** before they become mainstream
+- **Track paradigm shifts** in real-time across scientific disciplines
+- **Filter research content** based on epistemic significance
+- **Discover breakthrough research** (Model Crisis and Paradigm Shift papers)
+- **Curate their scientific feed** by subscribing to labels of interest
 
-Clone the repo and run `bun i` to install the dependencies. This project uses [Bun](https://bun.sh/) for package management.
+By applying stackable moderation labels, users can customize their Bluesky experience to surface the types of scientific contributions most relevant to their interests.
 
-Run `bunx @skyware/labeler setup` to convert an existing account into a labeler. You can exit after converting the account; there's no need to add the labels with the wizard. We'll do that from code.
+## Tech Stack
 
-Copy the `.env.example` file to `.env` and fill in the values:
+- **Runtime**: [Node.js](https://nodejs.org/) v22.11.0 (LTS)
+- **Package Manager**: npm
+- **Language**: TypeScript
+- **Core Libraries**:
+  - [@atproto/api](https://www.npmjs.com/package/@atproto/api) - AT Protocol API client
+  - [@skyware/labeler](https://www.npmjs.com/package/@skyware/labeler) - Bluesky labeler utilities
+  - [@skyware/jetstream](https://www.npmjs.com/package/@skyware/jetstream) - Real-time ATProto event streaming
+  - [@skyware/bot](https://www.npmjs.com/package/@skyware/bot) - Bluesky bot framework
+- **Web Framework**: Express.js
+- **Database**: better-sqlite3
+- **Monitoring**: Prometheus metrics with prom-client
+- **Logging**: Pino
 
-```Dotenv
+## Requirements
+
+- [Node.js](https://nodejs.org/) v22.11.0 or higher
+- npm (comes with Node.js)
+- A Bluesky account to convert into a labeler
+- Server with public-facing URL (for labeler endpoint)
+- Access to Thomas Kuhn Foundation KGX3 API (for classification)
+
+## Getting Started
+
+### 1. Initial Setup
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/yourusername/bluesky-labeler-kuhn.git
+cd bluesky-labeler-kuhn
+npm install
+```
+
+### 2. Convert Account to Labeler
+
+Run the setup wizard to convert your Bluesky account into a labeler:
+
+```bash
+bunx @skyware/labeler setup
+```
+
+You can exit after converting the account - labels will be configured via code.
+
+### 3. Configure Environment
+
+Copy `.env.example` to `.env` and fill in your credentials:
+
+```env
 DID=did:plc:xxx
 SIGNING_KEY=xxx
 BSKY_IDENTIFIER=xxx
@@ -38,37 +90,101 @@ FIREHOSE_URL=wss://jetstream.atproto.tools/subscribe
 CURSOR_UPDATE_INTERVAL=10000
 ```
 
-A `cursor.txt` file containing the time in microseconds also needs to be present. If it doesn't exist, it will be created with the current time.
+A `cursor.txt` file will be created automatically if it doesn't exist.
 
-Fill out the label IDs, names, descriptions etc. in `src/constants.ts` to your heart's desire. Run `bun set-posts` to create/update all posts at once, then copy/paste the related post rkeys ([record keys](https://atproto.com/specs/record-key)) into `src/constants.ts`. Run `bun set-labels` to create/update all labels at once.
+### 4. Configure Labels
 
-Alternatively, create the posts by hand, edit `src/constants.ts` and use `bunx @skyware/labeler label add` to add the labels.
+Edit the Kuhnian classification labels in [src/constants.ts](src/constants.ts):
 
-The server connects to [Jetstream](https://github.com/bluesky-social/jetstream), which provides a WebSocket endpoint that emits ATProto events in JSON. There are [many public instances](https://github.com/bluesky-social/jetstream/blob/main/README.md#public-instances) available:
+- Label IDs (normal-science, model-drift, model-crisis, paradigm-shift)
+- Descriptions
+- Related post content
 
-| Hostname                          | Region  |
-| --------------------------------- | ------- |
-| `jetstream1.us-east.bsky.network` | US-East |
-| `jetstream2.us-east.bsky.network` | US-East |
-| `jetstream1.us-west.bsky.network` | US-West |
-| `jetstream2.us-west.bsky.network` | US-West |
+Run these commands to create/update labels:
 
-The server needs to be reachable outside your local network using the URL you provided during the account setup (typically using a reverse proxy such as [Caddy](https://caddyserver.com/)):
+```bash
+npm run set-posts    # Create announcement posts
+npm run set-labels   # Create label definitions
+```
+
+Copy the generated post record keys back into [src/constants.ts](src/constants.ts).
+
+### 5. Configure Reverse Proxy
+
+The labeler needs to be publicly accessible. Example [Caddy](https://caddyserver.com/) configuration:
 
 ```Caddyfile
 labeler.example.com {
-	reverse_proxy 127.0.0.1:4100
+    reverse_proxy 127.0.0.1:4100
 }
 ```
 
-Metrics are exposed on the defined `METRICS_PORT` for [Prometheus](https://prometheus.io/). [This dashboard](https://grafana.com/grafana/dashboards/11159-nodejs-application-dashboard/) can be used to visualize the metrics in [Grafana](https://grafana.com/grafana/).
+### 6. Start the Labeler
 
-Start the project with `bun run start`.
+```bash
+npm run start
+```
 
-You can check that the labeler is reachable by checking the `/xrpc/com.atproto.label.queryLabels` endpoint of your labeler's server. A new, empty labeler returns `{"cursor":"0","labels":[]}`.
+Verify it's working by checking: `https://labeler.example.com/xrpc/com.atproto.label.queryLabels`
+
+A new labeler returns: `{"cursor":"0","labels":[]}`
+
+### Monitoring
+
+Prometheus metrics are exposed on the configured `METRICS_PORT` (default: 4101). Use [this Grafana dashboard](https://grafana.com/grafana/dashboards/11159-nodejs-application-dashboard/) to visualize the metrics.
+
+## How to Contribute
+
+Contributions are welcome! Here's how you can help:
+
+1. **Fork the repository** and create a feature branch
+2. **Make your changes** with clear commit messages
+3. **Test thoroughly** - ensure labels are applied correctly
+4. **Submit a pull request** with a description of your changes
+
+### Development Commands
+
+```bash
+npm run dev        # Start with hot reload
+npm run format     # Format code with Prettier
+npm run lint       # Lint code with ESLint
+npm run lint:fix   # Auto-fix linting issues
+```
+
+### Areas for Contribution
+
+- Improving classification accuracy
+- Adding support for additional research metadata
+- Enhancing label descriptions
+- Building analytics dashboards
+- Documentation improvements
+- Testing and bug reports
 
 ## Credits
 
-- [alice](https://bsky.app/profile/did:plc:by3jhwdqgbtrcc7q4tkkv3cf), creator of the [Zodiac Sign Labels](https://github.com/aliceisjustplaying/zodiacsigns)
-- [Juliet](https://bsky.app/profile/did:plc:b3pn34agqqchkaf75v7h43dk), author of the [Pronouns labeler](https://github.com/notjuliet/pronouns-bsky), whose code my labelers were originally based on
-- [futur](https://bsky.app/profile/did:plc:uu5axsmbm2or2dngy4gwchec), creator of the [skyware libraries](https://skyware.js.org/) which make it easier to build things for Bluesky
+### Technology Foundation
+
+- **[Alice](https://bsky.app/profile/did:plc:by3jhwdqgbtrcc7q4tkkv3cf)** - Creator of the [Bluesky Labeler Starter Kit](https://github.com/aliceisjustplaying/bluesky-labeler-starter) and [Zodiac Sign Labels](https://github.com/aliceisjustplaying/zodiacsigns)
+- **[Juliet](https://bsky.app/profile/did:plc:b3pn34agqqchkaf75v7h43dk)** - Author of the [Pronouns labeler](https://github.com/notjuliet/pronouns-bsky)
+- **[futur](https://bsky.app/profile/did:plc:uu5axsmbm2or2dngy4gwchec)** - Creator of [skyware libraries](https://skyware.js.org/)
+
+### Classification System
+
+- **[Thomas Kuhn Foundation](https://thomaskuhnfoundation.org/)** - KGX3 science intelligence engine and Kuhnian epistemic framework
+
+### References
+
+- [Bluesky Labelers Documentation](https://docs.bsky.app/docs/advanced-guides/moderation#labelers)
+- [KGX3 API Documentation](https://thomaskuhnfoundation.org/kgx3-api)
+
+## License
+
+MIT License
+
+Copyright (c) 2024 Alice <aliceisjustplaying@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
